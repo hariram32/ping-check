@@ -1,0 +1,248 @@
+<?xml version="1.0"?> <!--  encoding="utf-8" -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+  <title>SVG Canvas experiment</title>
+
+  <script type=text/javascript>
+    var c = 'red'; // Yes it's a global, @FIXME
+
+    // https://mathiasbynens.be/notes/xhr-responsetype-json
+    function getJSON(url, successHandler, errorHandler) {
+	var xhr = typeof XMLHttpRequest != 'undefined'
+	    ? new XMLHttpRequest()
+	    : new ActiveXObject('Microsoft.XMLHTTP');
+        url = url + "?sid=" + Math.random();
+        document.getElementById('status').innerHTML = "<p>Loading " + url + "</p>";
+        xhr.open('get', url, true);
+        //console.log("Get: " + url);
+	xhr.onreadystatechange = function() {
+	    var status;
+	    var data;
+	    // https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
+	    if (xhr.readyState == 4) { // `DONE`
+		status = xhr.status;
+		if (status == 200) {
+		    data = JSON.parse(xhr.responseText);
+		    successHandler && successHandler(data);
+                    document.getElementById('status').innerHTML = "<p><span style=\"color: blue\">Loading " + url + " Success!</span></p>";
+		} else {
+		    errorHandler && errorHandler(status);
+                    document.getElementById('status').innerHTML = "<p><span style=\"color: red\">Loading " + url + " Failed!</span></p>";
+		}
+	    }
+	};
+	xhr.send();
+    }
+
+    function istatus(x) {
+        switch(x) {
+        case "0":
+            return "down";
+            break;
+        case "1":
+            return "up";
+            break;
+        case "2":
+            return "unknown";
+            break;
+        default:
+            return "error";
+        }
+    }
+
+    function loadCanvas(id) {
+        var canvas = document.createElement('canvas'); //  // Create a <canvas> element
+        div = document.getElementById('canvasDiv'); 
+        canvas.id     = id;
+        canvas.width  = 100;
+        canvas.height = 100;
+        canvas.background = 'grey';
+        //canvas.style.zIndex   = 8;
+        //canvas.style.position = "absolute";
+        canvas.style.border   = "1px solid";
+
+	// Fill the path
+	//canvas.fillstyle = 'grey';
+	//canvas.fillRect(0,0,75,75);
+    
+        div.appendChild(canvas)
+    }
+
+    function updateCanvas(id, status) {
+      // console.log("Canvas = " + id + "\nStatus = " + status);
+	var can = document.getElementById(id);
+        var hdc = can.getContext('2d');
+
+	h = parseInt(can.getAttribute("height"));
+        w = parseInt(can.getAttribute("width"));
+      
+        //console.log("H = " + h);
+        //console.log("w = " + w);
+
+        var state = ''; var textColor = "cyan";
+        switch(status) {
+        case "0":
+            c = 'red';
+            textColor = 'yellow';
+            state = 'down';
+            break;
+        case "1":
+            c = 'green';
+            textColor = 'white';
+            state = 'up';
+            break;
+        case "2":
+            c = 'yellow';
+            textColor = 'red';
+            state = 'unknown';
+            break;
+        default:
+            c = 'grey';
+            textColor = 'pink';
+            state = 'error (' + c + ')';
+        }
+        can.title = id + " is " + state;
+
+	// Fill the path
+	hdc.fillStyle = c;
+	hdc.fillRect(0,0,w,h); // context.fillRect(x,y,width,height);
+
+	hdc.fillStyle = textColor; //
+        hdc.font      = "12px Arial";
+        hdc.fillText(id, 4, h-28);
+        hdc.fillText(state, 4, h-14);
+    }
+
+    function firstLoad(data) {
+        //console.log("firstLoad");
+        var arr = data.hosts;
+
+        //var h = parseInt(window.innerHeight); // Window (basically body in this case (but not all)
+        //var w = parseInt(window.innerWidth);
+
+        //console.log("DIV H = " + h + "\nDIV W = " + w);
+
+        document.getElementById('canvasDiv').innerHTML = "";
+
+        for (var i = 0, len = arr.length; i < len; i++) {
+            loadCanvas(arr[i].ip);
+
+            updateCanvas(arr[i].ip, arr[i].status);
+        }
+    }
+
+    function success(data) {
+        //console.log("success");
+        var arr = data.hosts;
+
+        //var h = parseInt(document.getElementById('canvasDiv').innerHeight); // NaN when not set
+        //var w = parseInt(document.getElementById('canvasDiv').innerWidth);  // NaN when not set
+        //var h = parseInt(window.innerHeight); // Window (basically body in this case (but not all)
+        //var w = parseInt(window.innerWidth);
+
+        //console.log("DIV H = " + h + "\nDIV W = " + w);
+
+        for (var i = 0, len = arr.length; i < len; i++) {
+            // update the color
+            updateCanvas(arr[i].ip, arr[i].status);
+        }
+    }
+
+    function fail(data) {
+        console.log("fail");
+    }
+
+    /*
+    # {
+    #   "hosts": [
+    #     { "ip": "192.168.24.1", "status": "1" },
+    #     { "ip": "192.168.24.2", "status": "1" },
+    #     { "ip": "192.168.2.1", "status": "0" },
+    #     { "ip": "failed.uucp", "status": "2" }
+    #   ],
+    #   "script:": "ping-check.sh"
+    # }
+    */
+
+    // http://stackoverflow.com/questions/13173381/need-to-change-the-canvas-background-color-while-using-fabric-js
+    // http://stackoverflow.com/questions/20488590/set-background-fill-stroke-and-opacity-of-html5-canvas
+    function toggle() {
+	var can = document.getElementById('myCanvas2');
+        var hdc = can.getContext('2d');
+
+	h=parseInt(document.getElementById('myCanvas2').getAttribute("height"));
+	w=parseInt(document.getElementById('myCanvas2').getAttribute("width"));
+        //console.log("H = " + h);
+        //console.log("w = " + w);
+
+	if(c === 'red') {
+            c = 'green';
+            x = "up";
+	} else {
+            c = 'red'
+            x = "down";
+	}
+
+	// Fill the path
+	hdc.fillStyle = c;
+	hdc.fillRect(0,0,w,h); // context.fillRect(x,y,width,height);
+        //can.style.opacity = '0.2';
+
+        // Add text (doesn't work?)
+	hdc.fillStyle = 'white'; // doesn't work
+        hdc.font      = "12px Arial";
+        hdc.fillText("myCanvas2", 4, h-28);
+        hdc.fillText(x, 4, h-14);
+    }
+
+    function t() {
+	var can = document.getElementById('myCanvas2');
+	var hdc = can.getContext('2d');
+
+	h=parseInt(document.getElementById('myCanvas2').getAttribute("height"));
+	w=parseInt(document.getElementById('myCanvas2').getAttribute("width"));
+        // Background
+        hdc.fillStyle = 'grey';
+	hdc.fillRect(0,0,w,h); // context.fillRect(x,y,width,height);
+
+        // Text
+	hdc.fillStyle = 'white'; //
+        hdc.font      = "12px Arial";
+        hdc.fillText("myCanvas2", 4, 14);
+        hdc.fillText("unknown", 4, 28);
+    }
+
+    function init() {
+        // We need to add logic here to read in the file, then figure out the  of boxes
+        // then created that many canvases. Then populate them with the updated information
+
+        var url = "ip-results.json";
+
+        getJSON('/data/ip-results.json', firstLoad, fail);
+        setInterval("getJSON('/data/ip-results.json', success, fail)", 10000);
+
+        setTimeout("t()",50);         // Just fooling around
+        setInterval("toggle()",5000); // Actual work gets done here
+    }
+  </script>
+</html>  
+  <body onload="init()">
+
+    <div id="test">
+      <canvas id="myCanvas1" width="100" height="100"
+	      style="border:1px solid #000000;">
+      </canvas>
+      <canvas id="myCanvas2" width="100" height="100"
+	      style="border:1px solid #000000;background-color:red">
+      </canvas>
+    </div>
+    <div id="canvasDiv">
+      <p>Loading ...</p>
+    </div>
+    <div id="status">
+      <p>Loading ...</p>
+    </div>
+  </body>
+</html>
