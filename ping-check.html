@@ -6,6 +6,7 @@
   <title>SVG Canvas experiment</title>
 
   <script type=text/javascript>
+    var VERSION = "v1.1.2";
     var c = 'red'; // Yes it's a global, @FIXME
 
     // https://mathiasbynens.be/notes/xhr-responsetype-json
@@ -70,7 +71,7 @@
         div.appendChild(canvas)
     }
 
-    function updateCanvas(id, status) {
+    function updateCanvas(id, status, nom) {
       // console.log("Canvas = " + id + "\nStatus = " + status);
 	var can = document.getElementById(id);
         var hdc = can.getContext('2d');
@@ -103,7 +104,7 @@
             textColor = 'pink';
             state = 'error (' + c + ')';
         }
-        can.title = id + " is " + state;
+        can.title = nom + " (" + id + ") is " + state;
 
 	// Fill the path
 	hdc.fillStyle = c;
@@ -111,7 +112,8 @@
 
 	hdc.fillStyle = textColor; //
         hdc.font      = "12px Arial";
-        hdc.fillText(id, 4, h-28);
+        hdc.fillText(nom,   4, h-86);
+        hdc.fillText(id,    4, h-28);
         hdc.fillText(state, 4, h-14);
     }
 
@@ -129,7 +131,7 @@
         for (var i = 0, len = arr.length; i < len; i++) {
             loadCanvas(arr[i].ip);
 
-            updateCanvas(arr[i].ip, arr[i].status);
+            updateCanvas(arr[i].ip, arr[i].status, arr[i].name);
         }
     }
 
@@ -146,7 +148,7 @@
 
         for (var i = 0, len = arr.length; i < len; i++) {
             // update the color
-            updateCanvas(arr[i].ip, arr[i].status);
+            updateCanvas(arr[i].ip, arr[i].status, arr[i].name);
         }
     }
 
@@ -218,26 +220,15 @@
         // We need to add logic here to read in the file, then figure out the  of boxes
         // then created that many canvases. Then populate them with the updated information
 
-        var url = "ip-results.json";
+        var url = "/data/ip-results.json";
 
-        getJSON('/data/ip-results.json', firstLoad, fail);
-        setInterval("getJSON('/data/ip-results.json', success, fail)", 10000);
-
-        setTimeout("t()",50);         // Just fooling around
-        setInterval("toggle()",5000); // Actual work gets done here
+        getJSON(url, firstLoad, fail);
+        setInterval("getJSON(url, success, fail)", 10000);
     }
   </script>
-</html>  
+</head>
   <body onload="init()">
 
-    <div id="test">
-      <canvas id="myCanvas1" width="100" height="100"
-	      style="border:1px solid #000000;">
-      </canvas>
-      <canvas id="myCanvas2" width="100" height="100"
-	      style="border:1px solid #000000;background-color:red">
-      </canvas>
-    </div>
     <div id="canvasDiv">
       <p>Loading ...</p>
     </div>
