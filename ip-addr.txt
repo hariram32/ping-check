@@ -1,0 +1,9 @@
+# Comments go here
+# Fields are seperated with whitespace ("m using tabs here)
+# Host_IP       Hostname
+
+Host_IP         Hostname
+192.168.24.1	hostname1
+192.168.24.2	hostname2
+192.168.2.1	hostname3
+failed.uucp	hostname4
