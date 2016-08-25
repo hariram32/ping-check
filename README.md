@@ -11,9 +11,9 @@ A friend asked me to create a simple web interface to a ping script we had runni
 ## Notes
 
 * Verified with Firefox under Linux
-  * Browser needs to support Javascript, XMLHttpRequest and SVG
+  * Browser needs to support Javascript, AJAX (XMLHttpRequest) and SVG
   * setInterval for XMLHttpRequest is set to around 10 seconds
-  # ip-results.json is expected in the http://webserver/data/ip-results.json dir
+  * ip-results.json is expected in the http://webserver/data/ip-results.json dir
 
 * ping-check.sh requires BASH (I think I have 4.0)
 * ping goes into crontab and runs as often as necessary
@@ -24,3 +24,29 @@ A friend asked me to create a simple web interface to a ping script we had runni
 * cp ping-check.sh /path/bin/ping-check.sh for which every user you want running this
 * add a cron entry with something like:
   */10 * * * * /path/bin/ping-check.sh && cp ip-results.json /path/www/data/ip-results.json && chmod a+r /path/www/data/ip-results.json
+
+## ip-addr.txt
+```
+# Comments go here
+# Fields are seperated with whitespace ("m using tabs here)
+# Host_IP       Hostname
+
+Host_IP         Hostname
+192.168.24.1	hostname1
+192.168.24.2	hostname2
+192.168.2.1	hostname3
+failed.uucp	hostname4
+```
+
+## ip-results.json
+```
+{
+  "hosts": [
+    { "name": "hostname1", "ip": "192.168.24.1", "status": "1" },
+    { "name": "hostname2", "ip": "192.168.24.2", "status": "1" },
+    { "name": "hostname3", "ip": "192.168.2.1", "status": "0" },
+    { "name": "hostname4", "ip": "failed.uucp", "status": "2" }
+  ]
+  "script:": "ping-check.sh v1.1.0"
+}
+```
