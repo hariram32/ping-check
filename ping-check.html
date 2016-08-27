@@ -56,12 +56,10 @@
     function loadCanvas(id) {
         var canvas = document.createElement('canvas'); //  // Create a <canvas> element
         div = document.getElementById('canvasDiv'); 
-        canvas.id     = id;
-        canvas.width  = 100;
-        canvas.height = 100;
-        canvas.background = 'grey';
-        //canvas.style.zIndex   = 8;
-        //canvas.style.position = "absolute";
+        canvas.id             = id;
+        canvas.width          = 100;
+        canvas.height         = 100;
+        canvas.background     = 'grey';
         canvas.style.border   = "1px solid";
 
 	// Fill the path
@@ -131,89 +129,35 @@
         for (var i = 0, len = arr.length; i < len; i++) {
             loadCanvas(arr[i].ip);
 
-            updateCanvas(arr[i].ip, arr[i].status, arr[i].name);
+            updateCanvas(arr[i].ip, arr[i].state, arr[i].name);
         }
     }
 
+    /*
+    ** {
+    **   "hosts": [
+    **     { "name": "hostname1", "ip": "192.168.24.1", "state": "1", "href" : "a/index.html" },
+    **     { "name": "hostname2", "ip": "192.168.24.2", "state": "1", "href" : "b/index.html" },
+    **     { "name": "hostname3", "ip": "192.168.2.1",  "state": "0", "href" : "c/index.html" },
+    **     { "name": "hostname4", "ip": "failed.uucp",  "state": "2", "href" : "d/index.html" }
+    **   ]
+    **   "script:": "ping-check.sh v1.2.3"
+    ** }
+    */
+
+    // http://stackoverflow.com/questions/13173381/need-to-change-the-canvas-background-color-while-using-fabric-js
+    // http://stackoverflow.com/questions/20488590/set-background-fill-stroke-and-opacity-of-html5-canvas
     function success(data) {
-        //console.log("success");
         var arr = data.hosts;
-
-        //var h = parseInt(document.getElementById('canvasDiv').innerHeight); // NaN when not set
-        //var w = parseInt(document.getElementById('canvasDiv').innerWidth);  // NaN when not set
-        //var h = parseInt(window.innerHeight); // Window (basically body in this case (but not all)
-        //var w = parseInt(window.innerWidth);
-
-        //console.log("DIV H = " + h + "\nDIV W = " + w);
 
         for (var i = 0, len = arr.length; i < len; i++) {
             // update the color
-            updateCanvas(arr[i].ip, arr[i].status, arr[i].name);
+            updateCanvas(arr[i].ip, arr[i].state, arr[i].name);
         }
     }
 
     function fail(data) {
         console.log("fail");
-    }
-
-    /*
-    # {
-    #   "hosts": [
-    #     { "ip": "192.168.24.1", "status": "1" },
-    #     { "ip": "192.168.24.2", "status": "1" },
-    #     { "ip": "192.168.2.1", "status": "0" },
-    #     { "ip": "failed.uucp", "status": "2" }
-    #   ],
-    #   "script:": "ping-check.sh"
-    # }
-    */
-
-    // http://stackoverflow.com/questions/13173381/need-to-change-the-canvas-background-color-while-using-fabric-js
-    // http://stackoverflow.com/questions/20488590/set-background-fill-stroke-and-opacity-of-html5-canvas
-    function toggle() {
-	var can = document.getElementById('myCanvas2');
-        var hdc = can.getContext('2d');
-
-	h=parseInt(document.getElementById('myCanvas2').getAttribute("height"));
-	w=parseInt(document.getElementById('myCanvas2').getAttribute("width"));
-        //console.log("H = " + h);
-        //console.log("w = " + w);
-
-	if(c === 'red') {
-            c = 'green';
-            x = "up";
-	} else {
-            c = 'red'
-            x = "down";
-	}
-
-	// Fill the path
-	hdc.fillStyle = c;
-	hdc.fillRect(0,0,w,h); // context.fillRect(x,y,width,height);
-        //can.style.opacity = '0.2';
-
-        // Add text (doesn't work?)
-	hdc.fillStyle = 'white'; // doesn't work
-        hdc.font      = "12px Arial";
-        hdc.fillText("myCanvas2", 4, h-28);
-        hdc.fillText(x, 4, h-14);
-    }
-
-    function t() {
-	var can = document.getElementById('myCanvas2');
-	var hdc = can.getContext('2d');
-
-	h=parseInt(document.getElementById('myCanvas2').getAttribute("height"));
-	w=parseInt(document.getElementById('myCanvas2').getAttribute("width"));
-        // Background
-        hdc.fillStyle = 'grey';
-	hdc.fillRect(0,0,w,h); // context.fillRect(x,y,width,height);
-
-        // Text
-	hdc.fillStyle = 'white'; //
-        hdc.font      = "12px Arial";
-        hdc.fillText("myCanvas2", 4, 14);
-        hdc.fillText("unknown", 4, 28);
     }
 
     function init() {
@@ -222,7 +166,9 @@
 
         var url = "/data/ip-results.json";
 
+        // First time we need to get the JSON data from the url
         getJSON(url, firstLoad, fail);
+        // then every 10 seconds after that
         setInterval("getJSON(url, success, fail)", 10000);
     }
   </script>
