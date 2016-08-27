@@ -1,0 +1,341 @@
+<?xml version="1.0"?> <!--  encoding="utf-8" -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+  <title>SVG Canvas Experiment 2</title>
+
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+  <script type=text/javascript>
+    var url = "/data/ip-results.json";
+
+    var VERSION = "v1.2.3";
+    var c = 'red';		// Yes it's a global, @FIXME
+    var Links = new Array();	// Links information
+    var Objs  = new Array();	// Links on JSON format
+    var hoverLink = "";		// Href of the link which cursor points at
+
+    // https://mathiasbynens.be/notes/xhr-responsetype-json
+    function getJSON(url, successHandler, errorHandler) {
+	var xhr = typeof XMLHttpRequest != 'undefined'
+	    ? new XMLHttpRequest()
+	    : new ActiveXObject('Microsoft.XMLHTTP');
+        url = url + "?sid=" + Math.random();
+        document.getElementById('status').innerHTML = "<p>Loading " + url + "</p>";
+        xhr.open('get', url, true);
+        //console.log("Get: " + url);
+	xhr.onreadystatechange = function() {
+	    var status;
+	    var data;
+	    // https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
+	    if (xhr.readyState == 4) { // `DONE`
+		status = xhr.status;
+		if (status == 200) {
+		    data = JSON.parse(xhr.responseText);
+		    successHandler && successHandler(data);
+                    document.getElementById('status').innerHTML = "<p><span style=\"color: blue\">Loading " + url + " Success!</span></p>";
+		} else {
+		    errorHandler && errorHandler(status);
+                    document.getElementById('status').innerHTML = "<p><span style=\"color: red\">Loading " + url + " Failed!</span></p>";
+		}
+	    }
+	};
+	xhr.send();
+    }
+
+    // There has to be a way to get the absolute position of canvas.id
+    function loadCanvas(obj) {
+        var canvas = document.createElement('canvas'); // Create a <canvas> element
+        canvas.id             = obj.ip;
+        canvas.width          = 100;
+        canvas.height         = 100;
+        canvas.background     = 'grey';
+        canvas.style.border   = "1px solid";
+
+        var hdc = canvas.getContext('2d');
+
+        hdc.fillStyle = 'blue';
+	hdc.fillRect(90,45,10,10); // context.fillRect(x,y,width,height);        
+        drawLink(canvas, 90, 46, obj.href, obj.ip);
+
+        // console.log(JSON.stringify(canvas)); // This gives you the above attributes
+        //console.dir(canvas); // This gives you a very cool directory tree of attributes
+        // Canvas.id    = 192.168.2.1 (3rd canvas)
+        // 
+        // offsetTop    = 8
+        // offsetLeft   = 211
+        // offsetHeight = 102
+        // offsetWidth  = 102
+
+        // Add the canvas to the div
+        div = document.getElementById('canvasDiv'); 
+        div.appendChild(canvas)
+    }
+
+    // Interesting mouse stuff
+    // http://javascript.info/tutorial/mouse-events
+
+    // http://stackoverflow.com/questions/6215841/create-links-in-html-canvas (better)
+    // Link hover
+    function on_mousemove (ev) {
+        var x, y;
+
+        // Get the mouse position relative to the canvas element
+        if (ev.layerX || ev.layerX == 0) { // For Firefox
+            x = ev.layerX;
+            y = ev.layerY;
+        }
+
+        // Link hover
+        for (var i = Links.length - 1; i >= 0; i--) {
+            var params = new Array();
+
+            // Get link params back from array
+            params = Links[i].split(";");
+
+            var linkX      = parseInt(params[0]),
+                linkY      = parseInt(params[1]),
+                linkWidth  = parseInt(params[2]),
+                linkHeight = parseInt(params[3]),
+                linkHref   = params[4];
+
+            // Check if cursor is in the link area
+            if (x >= linkX && x <= (linkX + linkWidth) && y >= linkY && y <= (linkY + linkHeight)){
+                document.body.style.cursor = "pointer";
+                hoverLink = linkHref;
+                break;
+            } else {
+                document.body.style.cursor = "";
+                hoverLink = "";
+            }
+        }
+    }
+
+    // Link click
+    function on_click(e) {
+        if (hoverLink){
+            window.open(hoverLink); // Use this to open in new tab
+            //window.location = hoverLink; // Use this to open in current window
+        }
+    }
+
+    function getAbsMousePos(canvas, evt) {
+       return {
+           x: evt.clientX,
+           y: evt.clientY
+       };
+    }
+    function getRelMousePos(canvas, evt) {
+       var rect = canvas.getBoundingClientRect();
+
+       return {
+           x: evt.clientX - rect.left,
+           y: evt.clientY - rect.top
+       };
+    }
+
+    // Draw the link
+    function drawLink(canvas, x ,y, href, title="none"){
+        var linkTitle  = title,
+            linkX      = x,
+            linkY      = y,
+            linkWidth  = 10, /* ctx.measureText(linkTitle).width */
+            linkHeight = 10; /* parseInt(ctx.font); // Get lineheight out of fontsize */
+
+        // Add mouse listeners
+        //canvas.addEventListener("mousemove", on_mousemove, false);
+        canvas.addEventListener('mousemove', function(evt) {
+            // relative mouse position
+            var mousePos = getAbsMousePos(canvas, evt);
+            var x = mousePos.x.toFixed();
+            var y = mousePos.y.toFixed();
+
+            // Link hover
+            for (var i = Links.length - 1; i >= 0; i--) {
+		var params = new Array();
+
+		// Get link params back from array
+		params = Links[i].split(";");
+
+                //    Y
+                // X -+-----------> Width
+                //    |
+                //    |
+                //    |
+                //    V Height
+
+		var linkY      = parseInt(params[0]),
+                    linkX      = parseInt(params[1]),
+                    linkWidth  = parseInt(params[2]),
+                    linkHeight = parseInt(params[3]),
+                    linkHref   = params[4];
+
+		// Check if cursor is in the link area
+		if (( (x >= linkX) && (x <= (linkX + linkWidth) ) ) &&
+                    ( (y >= linkY) && (y <= (linkY + linkHeight)) ) ) {
+                    document.body.style.cursor = "pointer";
+                    hoverLink = linkHref;
+                    break;
+		} else {
+                    document.body.style.cursor = "";
+                    hoverLink = "";
+		}
+            }
+        }, false);
+
+        canvas.addEventListener("click", on_click, false);
+    }
+
+    function updateCanvas(obj) {
+        var can = document.getElementById(obj.ip);
+
+        var hdc = can.getContext('2d');
+
+	h = parseInt(can.getAttribute("height"));
+        w = parseInt(can.getAttribute("width"));
+      
+        var state = ''; var textColor = "cyan";
+
+        switch(obj.state) {
+        case "0":
+            c = 'red';
+            textColor = 'yellow';
+            state = 'down';
+            break;
+        case "1":
+            c = 'green';
+            textColor = 'white';
+            state = 'up';
+            break;
+        case "2":
+            c = 'yellow';
+            textColor = 'red';
+            state = 'unknown';
+            break;
+        default:
+            c = 'grey';
+            textColor = 'pink';
+            state = 'error (' + c + ')';
+        }
+        can.title = obj.name + " (" + obj.ip + ") is " + obj.state;
+
+	// Fill the path
+	hdc.fillStyle = c;
+	hdc.fillRect(0,0,w,h); // context.fillRect(x,y,width,height);
+
+	hdc.fillStyle = textColor; //
+        hdc.font      = "12px Arial";
+        hdc.fillText(obj.name,  4, h-86);
+        hdc.fillText(obj.ip,    4, h-28);
+        hdc.fillText(obj.state, 4, h-14);
+
+        // I want to add a box on the left side of each canvas 10x10
+	// Fill the path
+        // Not sure I need this @TODO
+	hdc.fillStyle = 'blue';
+	hdc.fillRect(90,45,10,10); // context.fillRect(x,y,width,height);
+    }
+
+    function addLinks(obj) {
+        // Get the canvas
+        var can = document.getElementById(obj.ip);
+
+        if(! (can && can !== 'null' && can !== 'undefined')) {
+            console.log("Canvas not found (???)");
+            return(-1);
+        }
+
+        // I don't need JSON for this but I'd like to switch to JSON later
+        var o = {
+            "x":       can.offsetTop,
+            "y":       can.offsetLeft,
+            "width":   102,
+            "height":  102,
+            "href":    obj.href,
+            "title":   obj.name
+        };
+        // Objs.push(0);
+        Links.push( o.x + ";" + o.y + ";" + o.width + ";" + o.height + ";" + o.href + ";" + o.title + ";");
+    }
+
+    function firstLoad(data) {
+        var arr = data.hosts;
+
+        document.getElementById('canvasDiv').innerHTML = "";
+
+        for (var i = 0, len = arr.length; i < len; i++) {
+            loadCanvas(arr[i]);   // Build the canvas objects
+            updateCanvas(arr[i]); // Update the object attributes
+            // @FIXME: what happens if the screen is resized?
+	    addLinks(arr[i]);     // Build the mouseover/onclick info
+        }
+    }
+
+    /*
+    ** {
+    **   "hosts": [
+    **     { "name": "hostname1", "ip": "192.168.24.1", "state": "1", "href" : "a/index.html" },
+    **     { "name": "hostname2", "ip": "192.168.24.2", "state": "1", "href" : "b/index.html" },
+    **     { "name": "hostname3", "ip": "192.168.2.1",  "state": "0", "href" : "c/index.html" },
+    **     { "name": "hostname4", "ip": "failed.uucp",  "state": "2", "href" : "d/index.html" }
+    **   ],
+    **   "script:": "ping-check.sh v1.2.3"
+    ** }
+    */
+
+    // http://stackoverflow.com/questions/13173381/need-to-change-the-canvas-background-color-while-using-fabric-js
+    // http://stackoverflow.com/questions/20488590/set-background-fill-stroke-and-opacity-of-html5-canvas
+    function success(data) {
+        var arr = data.hosts;
+
+        for (var i = 0, len = arr.length; i < len; i++) {
+            // update the color
+            updateCanvas(arr[i]);
+        }
+    }
+
+    function fail(data) {
+        console.log("fail");
+    }
+
+    function init() {
+        // We need to add logic here to read in the file, then figure out the  of boxes
+        // then created that many canvases. Then populate them with the updated information
+
+        // First time we need to get the JSON data from the url
+        getJSON(url, firstLoad, fail);
+        // then every 10 seconds after that
+        setInterval("getJSON(url, success, fail)", 10000);
+    }
+  </script>
+</head>
+  <body onload="init()">
+
+    <div id="canvasDiv">
+      <p>Loading ...</p>
+    </div>
+    <div id="status">
+      <p>Loading ...</p>
+    </div>
+  </body>
+</html>
+<!--
+Push: 90;46;10;10;a/index.html;[object HTMLCanvasElement];192.168.24.1; check.html:133:9
+
+Push: 90;46;10;10;b/index.html;[object HTMLCanvasElement];192.168.24.2; check.html:133:9
+
+Push: 90;46;10;10;c/index.html;[object HTMLCanvasElement];192.168.2.1; check.html:133:9
+
+Push: 90;46;10;10;d/index.html;[object HTMLCanvasElement];failed.uucp; check.html:133:9
+
+click { target: <canvas#192.168.24.1>, buttons: 0, clientX: 25, clientY: 55, layerX: 25, layerY: 55 } check.html:102:9
+
+click { target: <canvas#failed.uucp>, buttons: 0, clientX: 410, clientY: 61, layerX: 410, layerY: 61 } check.html:102:9
+
+click { target: <canvas#192.168.2.1>, buttons: 0, clientX: 307, clientY: 63, layerX: 307, layerY: 63 } check.html:102:9
+
+click { target: <canvas#192.168.24.2>, buttons: 0, clientX: 207, clientY: 62, layerX: 207, layerY: 62 } check.html:102:9
+
+click { target: <canvas#192.168.24.1>, buttons: 0, clientX: 106, clientY: 62, layerX: 106, layerY: 62 } check.html:102:9
+-->
