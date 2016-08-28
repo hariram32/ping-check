@@ -1,9 +1,9 @@
 # Comments go here
 # Fields are seperated with whitespace ("m using tabs here)
-# Host_IP       Hostname
+# Host_IP       Hostname        URL (can be relative or absolute)
 
-Host_IP         Hostname
-192.168.24.1	hostname1
-192.168.24.2	hostname2
-192.168.2.1	hostname3
-failed.uucp	hostname4
+Host_IP         Hostname        x/index.html
+192.168.24.1    hostname1       a/index.html
+192.168.24.2    hostname2       b/index.html
+192.168.2.1     hostname3       c/index.html
+failed.uucp     hostname4       d/index.html
