@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION='v1.1.2'
+VERSION='v1.2.3'
 
 # JSON
 # Good
@@ -33,7 +33,7 @@ fi
 # 1st <white space> 2nd
 # IP                Hostname
 # egrep skips lines that start with a # (comments) and blank lines
-egrep -v '^#|^$' ${LIST} | while read ip nom
+egrep -v '^#|^$' ${LIST} | while read ip nom href
 do
     result=$(ping -c 3 $ip 2>&1)
     # xc can be 0, 1 or 2
@@ -54,9 +54,9 @@ do
 	    ;;
     esac
     if [ -n "${s}" ]; then
-	s="${s},\n    { \"name\": \"${nom}\", \"ip\": \"${ip}\", \"status\": \"${xc}\" }"
+	s="${s},\n    { \"name\": \"${nom}\", \"ip\": \"${ip}\", \"state\": \"${xc}\", \"href\": \"${href}\" }"
     else
-	s="    { \"name\": \"${nom}\", \"ip\": \"${ip}\", \"status\": \"${xc}\" }"
+	s="    { \"name\": \"${nom}\", \"ip\": \"${ip}\", \"state\": \"${xc}\", \"href\": \"${href}\" }"
     fi
 done
 
@@ -72,11 +72,10 @@ echo -e "{\n  \"hosts\": [\n${s}\n  ],\n  \"script:\": \"ping-check.sh ${VERSION
 # Sample output (ip-results.json)
 # {
 #   "hosts": [
-#     { "name": "hostname1", "ip": "192.168.24.1", "status": "1" },
-#     { "name": "hostname2", "ip": "192.168.24.2", "status": "1" },
-#     { "name": "hostname3", "ip": "192.168.2.1", "status": "0" },
-#     { "name": "hostname4", "ip": "failed.uucp", "status": "2" }
-#   ]
-#   "script:": "ping-check.sh v1.1.0"
+#     { "name": "hostname1", "ip": "192.168.24.1", "state": "1", "href" : "a/index.html" },
+#     { "name": "hostname2", "ip": "192.168.24.2", "state": "1", "href" : "b/index.html" },
+#     { "name": "hostname3", "ip": "192.168.2.1",  "state": "0", "href" : "c/index.html" },
+#     { "name": "hostname4", "ip": "failed.uucp",  "state": "2", "href" : "d/index.html" }
+#   ],
+#   "script:": "ping-check.sh v1.2.3"
 # }
-
