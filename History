@@ -1,0 +1,12 @@
+History
+
+This started out as a simple ping check web page status display. Ping returned either 0 (okay), 1 (failed) or 2 (error, like host not found). The basic idea being that a cron job (a script) would run periodically and report the status and the web page would interpret that data.
+
+I'm now extending this to support a bit more. I'd like the canvas to be a URL that takes you to another web page where you can get further data. Such that a server may be pingable but some of it's services may not be running. The main page could have a yellow canvas with a vague message but the link would have further details.
+
+v1.3.0
+
+- v1.3.x - Added support for a URL passed json config file (default: check.json). Added the cfg field to the ip-addr.txt and the ip-results.json files
+- v1.2.x - Added canvas as a link to reach other web pages. The ip-addr.txt and the ip-results.json were updated to support the extra href field
+- v1.1.x - Clean up for the varios files to correct misspellings
+- v1.0.x - Built a simple status web page that used AJAX to get a json file (ip-results.json) to update the status of each canvas. Basically each canvas was equal to something being monitored. Since the ping-check.sh script built the ip-results.json file. It is the ping of a host but the status check can be other scripts or programs.
