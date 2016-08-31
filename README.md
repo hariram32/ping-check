@@ -19,7 +19,7 @@ Same friend asked if it was possible to make each canvas clickable (linked to an
 
 * ping-check.sh requires BASH (I think I have 4.0)
 * ping goes into crontab and runs as often as necessary
-* the ip-results.json needs to be copied to the web server's <webserver root>/data directory. ping-check.sh defaults to /var/www/htnl/data/ip-results.json
+* the ip-results.json needs to be copied to the web server's <webserver root>/data directory. ping-check.sh defaults to /var/www/html/data/ip-results.json
 
 ## Installation
 
