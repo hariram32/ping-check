@@ -8,15 +8,43 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
   <script type=text/javascript>
-    var url = "/data/ip-results.json";
+    var VERSION = "v1.3.0";
+    var srcFile = "check.json";
+    var url     = "/data/ip-results.json";
 
-    var VERSION = "v1.2.3";
     var c = 'red';		// Yes it's a global, @FIXME
     var Links = new Array();	// Links information
     var Objs  = new Array();	// Links on JSON format
     var hoverLink = "";		// Href of the link which cursor points at
 
+      function changeImage(a) {
+          document.getElementById("led").src = a;
+          document.getElementById("date").innerHTML = '<div>' + Date() + '</div>';
+      }
+
+      // The on data LED is green
+      function on() {
+          // at the front of the div add an led that is green
+          changeImage("images/greenled.png");
+          document.getElementById("date").innerHTML = '<div>' + Date() + '</div>';
+      }
+
+      // The off data LED is red
+      function off() {
+          // at the front of the div add an led that is red
+          changeImage("images/redled.png");
+      }
+
+      // flash from green to yellow back to green for successful data transfer
+      // Also update the date string in the data div
+      function flash(duration) {
+          changeImage("images/yellowled.png");
+          setTimeout(function() { changeImage("images/greenled.png"); }, duration || 400);
+          document.getElementById("date").innerHTML = '<div>' + Date() + '</div>';
+     }
+
     // https://mathiasbynens.be/notes/xhr-responsetype-json
+    // the magic of AJAX
     function getJSON(url, successHandler, errorHandler) {
 	var xhr = typeof XMLHttpRequest != 'undefined'
 	    ? new XMLHttpRequest()
@@ -31,6 +59,7 @@
 	    // https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
 	    if (xhr.readyState == 4) { // `DONE`
 		status = xhr.status;
+                flash(300); // Mimic a modem's rx/tx led's
 		if (status == 200) {
 		    data = JSON.parse(xhr.responseText);
 		    successHandler && successHandler(data);
@@ -38,78 +67,36 @@
 		} else {
 		    errorHandler && errorHandler(status);
                     document.getElementById('status').innerHTML = "<p><span style=\"color: red\">Loading " + url + " Failed!</span></p>";
+                    off(); // Turn off the LED on a failure
 		}
 	    }
 	};
 	xhr.send();
     }
 
-    // There has to be a way to get the absolute position of canvas.id
+    // 
     function loadCanvas(obj) {
         var canvas = document.createElement('canvas'); // Create a <canvas> element
         canvas.id             = obj.ip;
         canvas.width          = 100;
         canvas.height         = 100;
         canvas.background     = 'grey';
-        canvas.style.border   = "1px solid";
+        canvas.style.border   = "1px solid"; // 1 + 100 + 1 = 102 , this is how we get 102 later
 
         var hdc = canvas.getContext('2d');
 
+/*
         hdc.fillStyle = 'blue';
-	hdc.fillRect(90,45,10,10); // context.fillRect(x,y,width,height);        
-        drawLink(canvas, 90, 46, obj.href, obj.ip);
-
-        // console.log(JSON.stringify(canvas)); // This gives you the above attributes
-        //console.dir(canvas); // This gives you a very cool directory tree of attributes
-        // Canvas.id    = 192.168.2.1 (3rd canvas)
-        // 
-        // offsetTop    = 8
-        // offsetLeft   = 211
-        // offsetHeight = 102
-        // offsetWidth  = 102
+        hdc.fillRect(90,45,10,10); // context.fillRect(x,y,width,height);
+*/
+        // @FIXME: drawlink() - blue box? This is technically incorrect 90, 46 really?
+        // Perhaps a rewrite of drawlink
+        //drawLink(canvas, 90, 46, obj.href, obj.ip);
+        drawLink(canvas);
 
         // Add the canvas to the div
         div = document.getElementById('canvasDiv'); 
         div.appendChild(canvas)
-    }
-
-    // Interesting mouse stuff
-    // http://javascript.info/tutorial/mouse-events
-
-    // http://stackoverflow.com/questions/6215841/create-links-in-html-canvas (better)
-    // Link hover
-    function on_mousemove (ev) {
-        var x, y;
-
-        // Get the mouse position relative to the canvas element
-        if (ev.layerX || ev.layerX == 0) { // For Firefox
-            x = ev.layerX;
-            y = ev.layerY;
-        }
-
-        // Link hover
-        for (var i = Links.length - 1; i >= 0; i--) {
-            var params = new Array();
-
-            // Get link params back from array
-            params = Links[i].split(";");
-
-            var linkX      = parseInt(params[0]),
-                linkY      = parseInt(params[1]),
-                linkWidth  = parseInt(params[2]),
-                linkHeight = parseInt(params[3]),
-                linkHref   = params[4];
-
-            // Check if cursor is in the link area
-            if (x >= linkX && x <= (linkX + linkWidth) && y >= linkY && y <= (linkY + linkHeight)){
-                document.body.style.cursor = "pointer";
-                hoverLink = linkHref;
-                break;
-            } else {
-                document.body.style.cursor = "";
-                hoverLink = "";
-            }
-        }
     }
 
     // Link click
@@ -120,7 +107,7 @@
         }
     }
 
-    function getAbsMousePos(canvas, evt) {
+    function getAbsMousePos(evt) {
        return {
            x: evt.clientX,
            y: evt.clientY
@@ -135,56 +122,87 @@
        };
     }
 
+    // Interesting mouse stuff
+    // http://javascript.info/tutorial/mouse-events
+    // http://stackoverflow.com/questions/6215841/create-links-in-html-canvas (better)
+    // Link hover
+        /*
+        ** @NOTE - This info on closures was to help make this a closure, not need but still a good note
+        **
+        ** - a closure is one way of supporting first-class functions; it is an
+        **   expression that can reference variables within its scope (when it
+        **   was first declared), assigned to a variable, passed as an argument
+        **   to a function, or returned as a function result. Or
+        ** - A closure is a stack frame which is allocated when a function starts
+        **   its execution, and not freed after the function returns (as if a
+        **   'stack frame' were allocated on the heap rather than the stack!).
+        */
+    // this function does the setup for the mouse over and on click
+    // this allows me to turn a canvas (for example) into a link
+    function on_mousemove(evt) {
+        // absolute mouse position
+        var mousePos = getAbsMousePos(evt);
+        var x = mousePos.x.toFixed();
+        var y = mousePos.y.toFixed();
+
+        // Link hover
+        for (var i = Links.length - 1; i >= 0; i--) {
+	    var params = new Array();
+
+	    // Get link params back from array
+	    params = Links[i].split(";");
+
+            //    Y
+            // X -+-----------> Width
+            //    |
+            //    |
+            //    |
+            //    V Height
+
+	    var linkY      = parseInt(params[0]),
+                linkX      = parseInt(params[1]),
+                linkWidth  = parseInt(params[2]),
+                linkHeight = parseInt(params[3]),
+                linkHref   = params[4];
+
+            //s = linkX + ";" + linkY + ";" + linkWidth + ";" + linkHeight + ";" + linkHref + ";" + params[5] + ";" + params[6];
+            //console.log("Links: " + s);
+            //console.log("Mouse: " + JSON.stringify(mousePos));
+	    // Check if cursor is in the link area
+	    if (( (x >= linkX) && (x <= (linkX + linkWidth) ) ) &&
+                ( (y >= linkY) && (y <= (linkY + linkHeight)) ) ) {
+                // We need the canvas for the pointer to work proper, not the doc.body
+                document.getElementById(params[6]).style.cursor = "pointer";
+                hoverLink = linkHref;
+                break;
+	    } else {
+                document.getElementById(params[6]).style.cursor = "auto";
+                hoverLink = "";
+	    }
+        }
+    }
+ 
     // Draw the link
-    function drawLink(canvas, x ,y, href, title="none"){
-        var linkTitle  = title,
-            linkX      = x,
-            linkY      = y,
-            linkWidth  = 10, /* ctx.measureText(linkTitle).width */
-            linkHeight = 10; /* parseInt(ctx.font); // Get lineheight out of fontsize */
-
+    function drawLink(canvas) {
         // Add mouse listeners
-        //canvas.addEventListener("mousemove", on_mousemove, false);
-        canvas.addEventListener('mousemove', function(evt) {
-            // relative mouse position
-            var mousePos = getAbsMousePos(canvas, evt);
-            var x = mousePos.x.toFixed();
-            var y = mousePos.y.toFixed();
-
-            // Link hover
-            for (var i = Links.length - 1; i >= 0; i--) {
-		var params = new Array();
-
-		// Get link params back from array
-		params = Links[i].split(";");
-
-                //    Y
-                // X -+-----------> Width
-                //    |
-                //    |
-                //    |
-                //    V Height
-
-		var linkY      = parseInt(params[0]),
-                    linkX      = parseInt(params[1]),
-                    linkWidth  = parseInt(params[2]),
-                    linkHeight = parseInt(params[3]),
-                    linkHref   = params[4];
-
-		// Check if cursor is in the link area
-		if (( (x >= linkX) && (x <= (linkX + linkWidth) ) ) &&
-                    ( (y >= linkY) && (y <= (linkY + linkHeight)) ) ) {
-                    document.body.style.cursor = "pointer";
-                    hoverLink = linkHref;
-                    break;
-		} else {
-                    document.body.style.cursor = "";
-                    hoverLink = "";
-		}
-            }
-        }, false);
-
+        canvas.addEventListener('mousemove', on_mousemove, false);
         canvas.addEventListener("click", on_click, false);
+    }
+
+    function istatus(x) {
+        switch(x) {
+        case "0":
+            return "down";
+            break;
+        case "1":
+            return "up";
+            break;
+        case "2":
+            return "unknown";
+            break;
+        default:
+            return "error";
+        }
     }
 
     function updateCanvas(obj) {
@@ -228,13 +246,15 @@
         hdc.font      = "12px Arial";
         hdc.fillText(obj.name,  4, h-86);
         hdc.fillText(obj.ip,    4, h-28);
-        hdc.fillText(obj.state, 4, h-14);
+        hdc.fillText(istatus(obj.state), 4, h-14);
 
         // I want to add a box on the left side of each canvas 10x10
 	// Fill the path
         // Not sure I need this @TODO
+/*
 	hdc.fillStyle = 'blue';
 	hdc.fillRect(90,45,10,10); // context.fillRect(x,y,width,height);
+*/
     }
 
     function addLinks(obj) {
@@ -253,10 +273,13 @@
             "width":   102,
             "height":  102,
             "href":    obj.href,
-            "title":   obj.name
+            "title":   obj.name,
+            "ip":      obj.ip
         };
         // Objs.push(0);
-        Links.push( o.x + ";" + o.y + ";" + o.width + ";" + o.height + ";" + o.href + ";" + o.title + ";");
+        s = o.x + ";" + o.y + ";" + o.width + ";" + o.height + ";" + o.href + ";" + o.title + ";" + o.ip;
+        //console.log("Links: " + s);
+        Links.push(s);
     }
 
     function firstLoad(data) {
@@ -265,6 +288,16 @@
         document.getElementById('canvasDiv').innerHTML = "";
 
         for (var i = 0, len = arr.length; i < len; i++) {
+            /*
+            **  @NOTE - Technically I use the Links array before I initialize them in the loadCanvas's mouse listeners
+            **
+            ** I'm not sure if I should be concerned or not but the loadCanvas
+            ** initializes the mouse listeners which use the Links array.
+            ** Basically uninitialized arrays aren't processed so the listeners
+            ** skip over (and no URL link exists). But I can't really add the
+            ** canvas info to the links until I have the canvases added. I think
+            ** it's okay as it is but leave this note here
+            */
             loadCanvas(arr[i]);   // Build the canvas objects
             updateCanvas(arr[i]); // Update the object attributes
             // @FIXME: what happens if the screen is resized?
@@ -299,43 +332,71 @@
         console.log("fail");
     }
 
+    // http://www.xul.fr/javascript/parameters.php
+    // http://example.com/example.html?name1=value1&name2=value2
+    function delineate() {
+        // split at the ? then &
+        var params = location.search.substring(1).split("&");
+
+        var str = "";
+        for(i = 0; i < params.length; i++) {
+            var temp = params[i].split("=");
+
+            if(temp.length == 1) {
+                // name = value ( length = 2, name is 1)
+                continue;
+            }
+
+            if(str == "") {
+                // Beginning of the string
+                str =  "{ \""+ unescape(temp[0]) + "\": \"" + unescape(temp[1]) + "\"";
+            } else {
+                // rest of the string
+                str += ",\"" + unescape(temp[0]) + "\": \"" + unescape(temp[1]) + "\"";
+            }
+        }
+        // end of the string
+        str += " }";
+
+        if(str == " }") {
+            return ;
+        } else {
+            return JSON.parse(str);;
+        }
+    }
+
     function init() {
-        // We need to add logic here to read in the file, then figure out the  of boxes
+        // get my base URL
+        //console.log("Base  = " + location.origin);
+        //console.log("Proto = " + location.protocol);
+        //console.log("Host  = " + location.host);
+        // Firefox has this so I guess older IE(?)
+        if (typeof location.origin === 'undefined') {
+            location.origin = location.protocol + '//' + location.host;
+        }
+
+        // Command line ... url line arguments
+        var json = delineate();
+
+        // We need to add logic here to read in the file, then figure out the infor for the boxes
         // then created that many canvases. Then populate them with the updated information
 
         // First time we need to get the JSON data from the url
         getJSON(url, firstLoad, fail);
+
         // then every 10 seconds after that
         setInterval("getJSON(url, success, fail)", 10000);
     }
+
   </script>
 </head>
   <body onload="init()">
-
+    <img src="images/yellowled.png" id="led" style="padding: 2px"></a>
+    <div id="date" style="float: right"></div>
     <div id="canvasDiv">
-      <p>Loading ...</p>
     </div>
     <div id="status">
       <p>Loading ...</p>
     </div>
   </body>
 </html>
-<!--
-Push: 90;46;10;10;a/index.html;[object HTMLCanvasElement];192.168.24.1; check.html:133:9
-
-Push: 90;46;10;10;b/index.html;[object HTMLCanvasElement];192.168.24.2; check.html:133:9
-
-Push: 90;46;10;10;c/index.html;[object HTMLCanvasElement];192.168.2.1; check.html:133:9
-
-Push: 90;46;10;10;d/index.html;[object HTMLCanvasElement];failed.uucp; check.html:133:9
-
-click { target: <canvas#192.168.24.1>, buttons: 0, clientX: 25, clientY: 55, layerX: 25, layerY: 55 } check.html:102:9
-
-click { target: <canvas#failed.uucp>, buttons: 0, clientX: 410, clientY: 61, layerX: 410, layerY: 61 } check.html:102:9
-
-click { target: <canvas#192.168.2.1>, buttons: 0, clientX: 307, clientY: 63, layerX: 307, layerY: 63 } check.html:102:9
-
-click { target: <canvas#192.168.24.2>, buttons: 0, clientX: 207, clientY: 62, layerX: 207, layerY: 62 } check.html:102:9
-
-click { target: <canvas#192.168.24.1>, buttons: 0, clientX: 106, clientY: 62, layerX: 106, layerY: 62 } check.html:102:9
--->
