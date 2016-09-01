@@ -10,3 +10,14 @@ v1.3.0
 - v1.2.x - Added canvas as a link to reach other web pages. The ip-addr.txt and the ip-results.json were updated to support the extra href field
 - v1.1.x - Clean up for the varios files to correct misspellings
 - v1.0.x - Built a simple status web page that used AJAX to get a json file (ip-results.json) to update the status of each canvas. Basically each canvas was equal to something being monitored. Since the ping-check.sh script built the ip-results.json file. It is the ping of a host but the status check can be other scripts or programs.
+
+v1.3.0 Change to check.html
+
+- added initial code to delineate url parameters (WIP)
+- cleaned up on_mousemove to make it work with the canvas's absolute position (calculated)
+- fixed the cursor to use the correct pointer (getElementById rather than on doc.body)
+- added flashing date LED code and last update date string, currently the load status is still in place
+- bumped the version of check.html (for support of passing more data via the url params and a new json file - WIP)
+- added a few @NOTES, @TODO and @FIXMEs
+- added obj.ip to the Links array (for use in getElementById())
+- various code clean up (ex: drawLink) and comments added to make the code more understandable
